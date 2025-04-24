@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext } from 'react';
 import { createDeck, shuffleDeck } from '../utils/cardUtils';
-import { Card, GameState, GameAction } from '../types';
+import { GameState, GameAction } from '../types';
 
-const initialState: GameState = {
+// 初始狀態
+export const initialState: GameState = {
   deck: [],
   playerCards: [],
   dealerCard: null,
@@ -14,7 +15,8 @@ const initialState: GameState = {
   isDealing: false,
 };
 
-function gameReducer(state: GameState, action: GameAction): GameState {
+// Reducer 函數
+export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'NEW_GAME':
       return {
@@ -41,7 +43,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         isDealing: false,
       };
     
-    case 'EVALUATE_ROUND':
+    case 'EVALUATE_ROUND': {
       const { result, winAmount } = action.payload;
       const newMoney = result === 'win' 
         ? state.money + winAmount 
@@ -74,6 +76,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         message: newMoney > 0 ? message : `${message} 您破產了！需要貸款嗎？`,
         gameHistory: [historyEntry, ...state.gameHistory].slice(0, 10),
       };
+    }
     
     case 'GET_LOAN':
       return {
@@ -112,34 +115,11 @@ function gameReducer(state: GameState, action: GameAction): GameState {
   }
 }
 
-const GameContext = createContext<{
+// 創建 Context
+export const GameContext = createContext<{
   state: GameState;
   dispatch: React.Dispatch<GameAction>;
 }>({
   state: initialState,
   dispatch: () => null,
 });
-
-export const useGameContext = () => useContext(GameContext);
-
-export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(gameReducer, initialState);
-  
-  // Initialize game on first load
-  useEffect(() => {
-    const deck = shuffleDeck(createDeck());
-    const playerCards = [deck[0], deck[1]];
-    const remainingDeck = deck.slice(2);
-    
-    dispatch({
-      type: 'NEW_GAME',
-      payload: { playerCards, deck: remainingDeck },
-    });
-  }, []);
-
-  return (
-    <GameContext.Provider value={{ state, dispatch }}>
-      {children}
-    </GameContext.Provider>
-  );
-};

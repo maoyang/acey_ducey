@@ -1,5 +1,5 @@
 import React from 'react';
-import { useGameContext } from '../context/GameContext';
+import { useGameContext } from '../context/useGameContext';
 
 const GameHistory: React.FC = () => {
   const { state } = useGameContext();

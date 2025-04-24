@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Card from './Card';
 import Controls from './Controls';
 import GameStatus from './GameStatus';
 import GameHistory from './GameHistory';
-import { useGameContext } from '../context/GameContext';
+import { useGameContext } from '../context/useGameContext';
 import { isCardBetween } from '../utils/cardUtils';
 
 const GameBoard: React.FC = () => {
@@ -11,21 +11,8 @@ const GameBoard: React.FC = () => {
   const { playerCards, dealerCard, gameStatus, message, isDealing } = state;
   const [showHistory, setShowHistory] = useState(false);
 
-  useEffect(() => {
-    if (gameStatus === 'dealing' && !isDealing) {
-      // Evaluate the round after card is dealt
-      const { result, winAmount } = evaluateRound();
-      
-      setTimeout(() => {
-        dispatch({
-          type: 'EVALUATE_ROUND',
-          payload: { result, winAmount },
-        });
-      }, 1000);
-    }
-  }, [gameStatus, isDealing]);
-
-  const evaluateRound = () => {
+  // 使用 useCallback 包裝 evaluateRound 函數以避免無限重新渲染
+  const evaluateRound = useCallback((): { result: 'win' | 'lose' | 'tie'; winAmount: number } => {
     if (!dealerCard || playerCards.length !== 2) {
       return { result: 'lose', winAmount: 0 };
     }
@@ -44,7 +31,21 @@ const GameBoard: React.FC = () => {
     }
     
     return { result: 'lose', winAmount: 0 };
-  };
+  }, [dealerCard, playerCards, state.currentBet]);
+
+  useEffect(() => {
+    if (gameStatus === 'dealing' && !isDealing) {
+      // Evaluate the round after card is dealt
+      const { result, winAmount } = evaluateRound();
+      
+      setTimeout(() => {
+        dispatch({
+          type: 'EVALUATE_ROUND',
+          payload: { result, winAmount },
+        });
+      }, 1000);
+    }
+  }, [gameStatus, isDealing, dispatch, evaluateRound]);
 
   const startNextRound = () => {
     // Take the next two cards from the deck and update remaining deck

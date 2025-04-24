@@ -7,7 +7,7 @@ interface CardProps {
 }
 
 const Card: React.FC<CardProps> = ({ card, isRevealing = false }) => {
-  const { suit, value, displayValue } = card;
+  const { suit, displayValue } = card;
   
   const suitSymbol = {
     hearts: '♥',
